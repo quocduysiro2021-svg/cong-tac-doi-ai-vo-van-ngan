@@ -3,35 +3,51 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Công tác Đội AI - Võ Văn Ngân V1.3</title>
+  <meta name="theme-color" content="#0d5ecf"/>
+  <title>Công tác Đội AI - Võ Văn Ngân V1.4</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <div id="loginScreen" class="auth-wrap">
     <div class="auth-card">
-      <div class="logo">⭐</div><div class="school">TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</div>
-      <h1>Công tác Đội AI</h1><p>Đăng nhập để quản lý kế hoạch, thi đua và dữ liệu công tác Đội.</p>
-      <label>Email</label><input id="email" type="email" placeholder="email@truong.edu.vn"/>
-      <label>Mật khẩu</label><input id="password" type="password" placeholder="••••••••"/>
+      <div class="logo">⭐</div>
+      <div class="school">TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</div>
+      <h1>Công tác Đội AI</h1>
+      <p>Trợ lý số dành cho Tổng phụ trách Đội</p>
+      <label>Email</label><input id="email" type="email" autocomplete="username" placeholder="email@truong.edu.vn"/>
+      <label>Mật khẩu</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"/>
       <button id="loginBtn">Đăng nhập</button><div id="loginMsg" class="msg"></div>
-      <div class="demo-note">Chưa cấu hình Supabase? App sẽ tự chạy ở chế độ Demo.</div>
+      <div class="demo-note">V1.4 • Hồ sơ Liên đội • AI nghiệp vụ • Lịch sử AI</div>
     </div>
   </div>
 
   <div id="appScreen" class="app-shell hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="badge">⭐</div><div><small>TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</small><b>Công tác Đội AI</b></div></div>
+      <div class="brand"><div class="badge">⭐</div><div><small>TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</small><b>Công tác Đội AI</b><span>V1.4</span></div></div>
       <nav>
-        <button data-page="home">🏠 Trang chủ</button><button data-page="plans">📅 Kế hoạch Đội</button>
-        <button data-page="competition">🏆 Thi đua lớp</button><button data-page="assembly">🎤 Sinh hoạt dưới cờ</button>
-        <button data-page="radio">🎙️ Phát thanh măng non</button><button data-page="assistant">🤖 Trợ lý AI</button>
-      </nav><button id="logoutBtn" class="logout">↩ Đăng xuất</button>
+        <button data-page="home">🏠 Trang chủ</button>
+        <button data-page="profile">🏫 Hồ sơ Liên đội</button>
+        <button data-page="plans">📅 Kế hoạch Đội</button>
+        <button data-page="competition">🏆 Thi đua lớp</button>
+        <button data-page="assembly">🎤 Sinh hoạt dưới cờ AI</button>
+        <button data-page="radio">🎙️ Phát thanh măng non AI</button>
+        <button data-page="assistant">🤖 Trợ lý Công tác Đội</button>
+        <button data-page="history">🕘 Lịch sử AI</button>
+      </nav>
+      <button id="logoutBtn" class="logout">↩ Đăng xuất</button>
     </aside>
     <main>
-      <header><button id="menuBtn">☰</button><div><small>Trợ lý số dành cho Tổng phụ trách Đội</small><h2 id="pageTitle">Trang chủ</h2></div><div id="userChip" class="user-chip">Anh Tiến</div></header>
+      <header>
+        <button id="menuBtn" aria-label="Mở menu">☰</button>
+        <div><small>Hệ thống hỗ trợ Công tác Đội và phong trào thiếu nhi</small><h2 id="pageTitle">Trang chủ</h2></div>
+        <div id="userChip" class="user-chip">Anh Tiến</div>
+      </header>
       <section id="content"></section>
     </main>
   </div>
+  <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script><script src="app.js"></script>
-</body></html>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
