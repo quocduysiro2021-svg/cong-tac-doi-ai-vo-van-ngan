@@ -4,30 +4,45 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="theme-color" content="#0d5ecf"/>
-  <title>Công tác Đội AI - Võ Văn Ngân V1.4</title>
+  <title>Công tác Đội AI - Multi-school V1.7C-01 DEV</title>
   <link rel="stylesheet" href="styles.css"/>
 </head>
 <body>
   <div id="loginScreen" class="auth-wrap">
     <div class="auth-card">
-      <div class="logo">⭐</div>
-      <div class="school">TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</div>
-      <h1>Công tác Đội AI</h1>
-      <p>Trợ lý số dành cho Tổng phụ trách Đội</p>
+      <div class="login-logos">
+        <div class="brand-logo-box"><img id="loginSchoolLogo" alt="Logo trường"><span id="loginSchoolLogoFallback">🏫</span></div>
+        <div class="brand-logo-box"><img id="loginDoiLogo" alt="Logo Đội"><span id="loginDoiLogoFallback">⭐</span></div>
+      </div>
+      <div id="loginSchoolName" class="school">CÔNG TÁC ĐỘI AI</div>
+      <h1 id="loginLienDoiName">Công tác Đội AI</h1>
+      <p id="loginSubtitle">Trợ lý số dành cho Tổng phụ trách Đội</p>
       <label>Email</label><input id="email" type="email" autocomplete="username" placeholder="email@truong.edu.vn"/>
       <label>Mật khẩu</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"/>
       <button id="loginBtn">Đăng nhập</button><div id="loginMsg" class="msg"></div>
-      <div class="demo-note">V1.4 • Hồ sơ Liên đội • AI nghiệp vụ • Lịch sử AI</div>
+      <div class="demo-note">V1.7C-01 DEV • Hoạt động & Sự kiện • AI nghiệp vụ</div>
     </div>
   </div>
 
   <div id="appScreen" class="app-shell hidden">
     <aside class="sidebar">
-      <div class="brand"><div class="badge">⭐</div><div><small>TRƯỜNG TIỂU HỌC VÕ VĂN NGÂN</small><b>Công tác Đội AI</b><span>V1.4</span></div></div>
+      <div class="brand">
+        <div class="brand-logo-stack">
+          <div class="sidebar-logo-box"><img id="sideSchoolLogo" alt="Logo trường"><span id="sideSchoolLogoFallback">🏫</span></div>
+          <div class="sidebar-logo-box mini"><img id="sideDoiLogo" alt="Logo Đội"><span id="sideDoiLogoFallback">⭐</span></div>
+        </div>
+        <div class="brand-copy">
+          <small id="sideSchoolName">CÔNG TÁC ĐỘI AI</small>
+          <b id="sideLienDoiName">Công tác Đội AI</b>
+          <span>V1.7C-01 DEV</span>
+        </div>
+      </div>
       <nav>
         <button data-page="home">🏠 Trang chủ</button>
         <button data-page="profile">🏫 Hồ sơ Liên đội</button>
+        <button data-page="wordsettings">📝 Mẫu văn bản</button>
         <button data-page="plans">📅 Kế hoạch Đội</button>
+        <button data-page="activities">🎯 Hoạt động & Sự kiện</button>
         <button data-page="competition">🏆 Thi đua lớp</button>
         <button data-page="assembly">🎤 Sinh hoạt dưới cờ AI</button>
         <button data-page="radio">🎙️ Phát thanh măng non AI</button>
@@ -40,14 +55,176 @@
       <header>
         <button id="menuBtn" aria-label="Mở menu">☰</button>
         <div><small>Hệ thống hỗ trợ Công tác Đội và phong trào thiếu nhi</small><h2 id="pageTitle">Trang chủ</h2></div>
-        <div id="userChip" class="user-chip">Anh Tiến</div>
+        <div id="userChip" class="user-chip">Tài khoản</div>
       </header>
       <section id="content"></section>
     </main>
   </div>
   <div id="toast" class="toast hidden"></div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
+
+
+
+<div id="sourceWorkflowModal" class="word-export-modal hidden">
+  <div class="word-export-backdrop" onclick="closeSourceWorkflowModal()"></div>
+  <div class="source-workflow-dialog">
+    <div class="word-export-head">
+      <div>
+        <small>TẠO TỪ CÔNG VĂN / TÀI LIỆU CẤP TRÊN</small>
+        <h3>📎 Công văn → Hoạt động → Kế hoạch trường</h3>
+      </div>
+      <button class="icon-btn" onclick="closeSourceWorkflowModal()">✕</button>
+    </div>
+    <div class="source-workflow-body">
+      <div class="source-flow-strip">
+        <span>1. Chọn file</span><b>→</b><span>2. Lưu Drive</span><b>→</b><span>3. AI đọc</span><b>→</b><span>4. Tạo kế hoạch</span>
+      </div>
+
+      <div id="driveConnectionBox" class="drive-connection-box">
+        <div>
+          <b>Google Drive</b>
+          <span id="driveConnectionState">Chưa kết nối</span>
+        </div>
+        <button id="driveConnectBtn" class="btn secondary" onclick="connectGoogleDrive()">🔗 Kết nối Drive</button>
+      </div>
+
+      <label class="source-drop-zone" for="sourceFileInput">
+        <input id="sourceFileInput" type="file" accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.webp" onchange="sourceFileChanged(this.files?.[0])">
+        <div class="source-drop-icon">📎</div>
+        <b id="sourceFileTitle">Chọn công văn / kế hoạch / ảnh</b>
+        <span id="sourceFileMeta">PDF, DOCX, TXT, JPG, PNG, WEBP · tối đa 15 MB</span>
+      </label>
+
+      <div class="source-ai-note">
+        ✨ <div><b>AI sẽ tự đọc tài liệu</b><span>Trích tên phong trào, yêu cầu cấp trên, thời hạn, đối tượng, nội dung bắt buộc và tự tạo Kế hoạch triển khai của trường.</span></div>
+      </div>
+
+      <div id="sourceWorkflowProgress" class="source-progress hidden"></div>
+      <div id="sourceAnalysisPreview" class="source-analysis-preview hidden"></div>
+
+      <div class="source-actions">
+        <button class="btn secondary" onclick="closeSourceWorkflowModal()">Hủy</button>
+        <button id="sourceCreateBtn" class="btn primary" onclick="runSourceWorkflow()">✨ PHÂN TÍCH & TẠO KẾ HOẠCH</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="quickActivityModal" class="word-export-modal hidden"><div class="word-export-backdrop" onclick="closeQuickActivityModal()"></div><div class="quick-activity-dialog"><div class="word-export-head"><div><small>QUY TRÌNH NHANH</small><h3>⚡ Tạo hoạt động & tài liệu</h3></div><button class="icon-btn" onclick="closeQuickActivityModal()">✕</button></div><div class="quick-activity-body"><label class="quick-field"><span>Tên hoạt động *</span><input id="qaName" placeholder="Ví dụ: Vui Tết Trung thu 2026"></label><div class="quick-grid"><label class="quick-field"><span>Ngày tổ chức *</span><input id="qaDate" type="date"></label><label class="quick-field"><span>Địa điểm</span><select id="qaLocation"><option>AI tự đề xuất</option><option>Sân trường</option><option>Hội trường</option><option>Lớp học</option></select></label><label class="quick-field"><span>Đối tượng</span><select id="qaAudience"><option>AI tự đề xuất</option><option>Toàn trường</option><option>Khối lớp</option><option>Đội viên</option><option>Học sinh</option></select></label></div><div class="quick-ai-note">✨ <b>AI tự soạn Mục tiêu & Nội dung chính</b><span>Anh không cần suy nghĩ và nhập phần này.</span></div><div class="quick-doc-select"><b>Tài liệu cần tạo</b><label><input type="checkbox" data-qa-doc="plan" checked> 📄 Kế hoạch</label><label><input type="checkbox" data-qa-doc="script" checked> 🎬 Kịch bản</label><label><input type="checkbox" data-qa-doc="mc" checked> 🎤 Lời dẫn MC</label><label><input type="checkbox" data-qa-doc="questions"> ❓ Câu hỏi</label><label><input type="checkbox" data-qa-doc="game"> 🎲 Trò chơi</label><label><input type="checkbox" data-qa-doc="radio"> 📻 Phát thanh</label><label><input type="checkbox" data-qa-doc="fanpage"> 📱 Fanpage</label></div><div id="quickActivityProgress" class="quick-progress hidden"></div><div class="quick-actions"><button class="btn secondary" onclick="closeQuickActivityModal()">Hủy</button><button id="quickActivityCreateBtn" class="btn primary" onclick="createQuickActivityAndDocuments()">✨ TẠO HOẠT ĐỘNG & TÀI LIỆU</button></div></div></div></div>
+<div id="independentDocModal" class="word-export-modal hidden">
+  <div class="word-export-backdrop" onclick="closeIndependentDocModal()"></div>
+  <div class="independent-doc-dialog">
+    <div class="word-export-head">
+      <div><small>Tài liệu độc lập</small><h3 id="independentDocTitle">Tài liệu</h3></div>
+      <button class="icon-btn" onclick="closeIndependentDocModal()">✕</button>
+    </div>
+    <div id="independentDocBody" class="independent-doc-body"></div>
+  </div>
+</div>
+
+<div id="wordExportModal" class="word-export-modal hidden">
+  <div class="word-export-backdrop" onclick="closeWordExportModal()"></div>
+  <div class="word-export-dialog" role="dialog" aria-modal="true" aria-labelledby="wordExportTitle">
+    <div class="word-export-head">
+      <div>
+        <small>Xuất Word</small>
+        <h3 id="wordExportTitle">Chọn mẫu văn bản</h3>
+      </div>
+      <button class="icon-btn" onclick="closeWordExportModal()" aria-label="Đóng">✕</button>
+    </div>
+
+    <div class="word-export-grid">
+      <div class="word-export-controls">
+        <label>Loại mẫu sử dụng</label>
+        <select id="wordExportTemplateSelect" onchange="refreshWordExportPreview()">
+          <option value="auto">✨ Tự động nhận diện</option>
+          <option value="plan">Kế hoạch</option>
+          <option value="report">Báo cáo</option>
+          <option value="program">Chương trình</option>
+          <option value="dossier">Hồ sơ</option>
+          <option value="script">Kịch bản</option>
+        </select>
+
+        <div id="wordDetectedHint" class="word-detected-hint"></div>
+
+        <label class="word-structure-toggle">
+          <input id="wordNormalizeStructure" type="checkbox" checked onchange="refreshWordExportPreview()">
+          <span>Chuẩn hóa cấu trúc nội dung theo loại văn bản</span>
+        </label>
+        <div id="wordStructureHint" class="word-structure-hint"></div>
+
+        <div class="word-ai-editor">
+          <div class="word-ai-editor-head">
+            <div>
+              <b>✨ AI biên tập trước khi xuất</b>
+              <span>Giữ nguyên dữ kiện, số liệu và minh chứng; chỉ chỉnh cấu trúc, câu chữ và văn phong.</span>
+            </div>
+            <button id="wordAIEditBtn" class="btn soft" onclick="aiEditDocumentForWord()">✨ Biên tập bằng AI</button>
+          </div>
+          <div id="wordAIEditStatus" class="word-ai-status">Chưa biên tập AI.</div>
+          <div id="wordAIEditPreviewWrap" class="word-ai-preview-wrap hidden">
+            <textarea id="wordAIEditPreview" rows="12" readonly></textarea>
+            <div class="word-ai-preview-actions">
+              <button class="btn secondary" onclick="useOriginalWordText()">↩ Dùng bản gốc</button>
+              <button class="btn primary" onclick="useAIEditedWordText()">✓ Dùng bản AI để xuất</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="word-preview-meta">
+          <div><span>Ký hiệu</span><b id="wordPreviewCode">—</b></div>
+          <div><span>Tiêu đề</span><b id="wordPreviewTitle">—</b></div>
+          <div><span>Lề Word</span><b id="wordPreviewMargins">—</b></div>
+          <div><span>Chữ / dòng</span><b id="wordPreviewTypography">—</b></div>
+        </div>
+
+        <div class="word-export-actions">
+          <button class="btn secondary" onclick="closeWordExportModal()">Hủy</button>
+          <button class="btn primary" onclick="confirmWordExport()">⬇ Xuất Word theo mẫu này</button>
+        </div>
+      </div>
+
+      <div class="word-export-preview-wrap">
+        <div class="word-paper-preview">
+          <div class="word-paper-top">
+            <div>
+              <div id="wordPreviewCouncil" class="mini-line">HỘI ĐỒNG ĐỘI</div>
+              <div id="wordPreviewTeam" class="mini-line strong">LIÊN ĐỘI</div>
+              <div class="mini-line">***</div>
+              <div id="wordPreviewNumber" class="mini-line number">Số: ...../...</div>
+            </div>
+            <div>
+              <div class="mini-line strong">ĐỘI TNTP HỒ CHÍ MINH</div>
+              <div id="wordPreviewDate" class="mini-line italic">..., ngày ... tháng ... năm ...</div>
+            </div>
+          </div>
+
+          <div id="wordPreviewHeading" class="word-paper-title">HỒ SƠ HOẠT ĐỘNG</div>
+          <div id="wordPreviewStructure" class="word-preview-structure"></div>
+
+          <div class="word-paper-signatures">
+            <div>
+              <b>Nơi nhận:</b>
+              <div id="wordPreviewRecipients">- ...</div>
+            </div>
+            <div id="wordPreviewApprovalCol">
+              <b id="wordPreviewApprovalTitle">DUYỆT CỦA BGH</b>
+              <span id="wordPreviewApprovalRole">Hiệu trưởng</span>
+            </div>
+            <div>
+              <b id="wordPreviewSignerTitle">NGƯỜI LẬP</b>
+              <span id="wordPreviewSignerRole">GV - TPT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
