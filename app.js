@@ -1175,7 +1175,7 @@ async function downloadActivityDossierWord(forcedType=null,normalizeStructure=tr
 
 
 // =====================================================
-// V1.7C-01 - GOOGLE DRIVE SOURCE WORKFLOW
+// V1.7C-02 - GOOGLE DRIVE + GEMINI FREE SOURCE WORKFLOW
 // Công văn → Drive → activity_id → AI đọc → Kế hoạch trường
 // =====================================================
 let googleDriveToken="";
@@ -1185,7 +1185,7 @@ let pendingSourceFile=null;
 let pendingSourceTargetActivityId=null;
 let activitySourceRows=[];
 
-const SOURCE_AI_FUNCTION_NAME=window.APP_CONFIG?.SOURCE_AI_FUNCTION_NAME||"doi-source-ai";
+const SOURCE_AI_FUNCTION_NAME="doi-gemini-ai"; // V1.7C-02: cố định Gemini cho luồng công văn, không fallback OpenAI
 const GOOGLE_CLIENT_ID=window.APP_CONFIG?.GOOGLE_CLIENT_ID||"";
 const GOOGLE_DRIVE_ROOT_FOLDER_ID=window.APP_CONFIG?.GOOGLE_DRIVE_ROOT_FOLDER_ID||"";
 const DRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
@@ -1352,8 +1352,8 @@ async function sourceAnalysisPayload(file){
 }
 async function analyzeSourceFile(file){
   const payload=await sourceAnalysisPayload(file);
+  payload.mode="analyze_source";
   payload.profile=profileForAI();
-  payload.instruction="Đọc trung thành tài liệu cấp trên để tạo hoạt động và Kế hoạch triển khai của trường. Không suy diễn ngoài nguồn.";
   const {data,error}=await sb.functions.invoke(SOURCE_AI_FUNCTION_NAME,{body:payload});
   if(error)throw error;
   if(data?.error)throw new Error(data.error);
@@ -1422,35 +1422,18 @@ async function saveActivitySourceRecord(activity,driveFile,folder,analysis){
   return row;
 }
 async function generatePlanFromSource(activity,analysis,sourceLink){
-  const sourceDigest=analysis?.source_digest||analysis?.source_summary||analysisText(analysis);
-  const prompt=`SOẠN KẾ HOẠCH TRIỂN KHAI CỦA NHÀ TRƯỜNG TỪ TÀI LIỆU CẤP TRÊN.
-
-NGUỒN CHỈ ĐẠO:
-${sourceDigest}
-
-THÔNG TIN ĐÃ TRÍCH:
-${JSON.stringify(analysis,null,2)}
-
-HỒ SƠ HOẠT ĐỘNG CỦA TRƯỜNG:
-${activityPrompt(activity,"plan")}
-
-ĐƯỜNG DẪN NGUỒN GOOGLE DRIVE:
-${sourceLink||""}
-
-YÊU CẦU:
-- Bám sát tuyệt đối yêu cầu của tài liệu cấp trên; không tự thêm yêu cầu trái nguồn.
-- Chuyển hóa thành Kế hoạch triển khai phù hợp cấp trường tiểu học.
-- Nếu nguồn không có số liệu, kinh phí, thời gian cụ thể thì không bịa.
-- Phân biệt rõ yêu cầu cấp trên và phần nhà trường chủ động tổ chức.
-- Cấu trúc hành chính rõ ràng: mục đích, yêu cầu, nội dung, thời gian/địa điểm/đối tượng nếu có, tổ chức thực hiện, phân công, báo cáo.
-- Không dùng Markdown (#, *, **, ---).
-- Không chèn phần cơ quan ban hành, số văn bản, nơi nhận và chữ ký; hệ thống Word sẽ tự trình bày theo mẫu trường.`;
-  const body={module:"assistant",profile:profileForAI(),task_type:"activity_plan_from_source",task_name:"Kế hoạch triển khai từ công văn",audience:activity.audience||"",prompt};
-  const {data,error}=await sb.functions.invoke(AI_FUNCTION_NAME,{body});
+  const body={
+    mode:"generate_plan",
+    profile:profileForAI(),
+    activity:{...activity,source_link:sourceLink||""},
+    analysis
+  };
+  const {data,error}=await sb.functions.invoke(SOURCE_AI_FUNCTION_NAME,{body});
   if(error)throw error;
-  if(data?.error)throw new Error(data.error);
-  const text=cleanExportText(data?.text||data?.result||"");
-  if(!text)throw new Error("AI chưa tạo được Kế hoạch trường.");
+  if(data?.error)throw new Error(data.error+(data?.stage?` [${data.stage}]`:""));
+  const text=cleanExportText(data?.text||"");
+  if(!text)throw new Error("Gemini chưa tạo được Kế hoạch trường.");
+  const prompt=`Gemini Free tạo Kế hoạch triển khai từ công văn nguồn: ${analysis?.source_number||""} ${analysis?.title||activity.activity_name||""}`.trim();
   const {error:hErr}=await sb.from("ai_history").insert({
     module:"assistant",
     title:`Kế hoạch hoạt động: ${activity.activity_name}`,
@@ -1458,7 +1441,7 @@ YÊU CẦU:
     prompt,
     result:text,
     audience:activity.audience||null,
-    extra:"V1.7C-01 | Tạo từ công văn Google Drive",
+    extra:"V1.7C-02 | Gemini Free | Tạo từ công văn Google Drive",
     created_by:currentUser.id,
     activity_id:activity.id,
     updated_at:new Date().toISOString()
@@ -1470,7 +1453,7 @@ async function runSourceWorkflow(){
   if(demo||!sb)return alert("Cần đăng nhập Supabase.");
   const file=pendingSourceFile;
   if(!file)return alert("Anh chọn công văn hoặc tài liệu nguồn trước.");
-  if(file.size>15*1024*1024)return alert("V1.7C-01 giới hạn file 15 MB để xử lý nhanh.");
+  if(file.size>15*1024*1024)return alert("V1.7C-02 giới hạn file 15 MB để xử lý nhanh.");
   const btn=$("#sourceCreateBtn"),p=$("#sourceWorkflowProgress");
   btn.disabled=true;p.classList.remove("hidden");
   try{
@@ -1482,7 +1465,7 @@ async function runSourceWorkflow(){
     const inbox=await getDriveInboxFolder();
     let driveFile=await driveUploadFile(file,inbox.id);
 
-    p.textContent="3/5 · AI đang đọc và trích nội dung công văn…";
+    p.textContent="3/5 · Gemini Free đang đọc và trích nội dung công văn…";
     const analysis=await analyzeSourceFile(file);
     showSourceAnalysisPreview(analysis);
 
@@ -1502,7 +1485,7 @@ async function runSourceWorkflow(){
     driveFile=await driveMoveFile(driveFile.id,folders.sourceFolder.id,inbox.id);
     await saveActivitySourceRecord(activity,driveFile,folders.sourceFolder,analysis);
 
-    p.textContent="5/5 · AI đang tạo Kế hoạch triển khai của trường…";
+    p.textContent="5/5 · Gemini Free đang tạo Kế hoạch triển khai của trường…";
     await generatePlanFromSource(activity,analysis,driveFile.webViewLink||`https://drive.google.com/file/d/${driveFile.id}/view`);
 
     p.textContent="✓ Hoàn tất: đã lưu Drive, liên kết hoạt động và tạo Kế hoạch trường.";
