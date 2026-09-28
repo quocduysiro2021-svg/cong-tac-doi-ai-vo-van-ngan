@@ -1184,6 +1184,8 @@ let googleTokenClient=null;
 let pendingSourceFile=null;
 let pendingSourceTargetActivityId=null;
 let activitySourceRows=[];
+let pendingSourceDriveFile=null; // HOTFIX-02: reuse upload on retry
+let pendingSourceCreatedActivityId=null; // HOTFIX-02: reuse activity on retry
 
 const SOURCE_AI_FUNCTION_NAME="doi-gemini-ai"; // V1.7C-02: cố định Gemini cho luồng công văn, không fallback OpenAI
 const GOOGLE_CLIENT_ID=window.APP_CONFIG?.GOOGLE_CLIENT_ID||"";
@@ -1193,6 +1195,8 @@ const DRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
 function openSourceWorkflowModal(activityId=null){
   pendingSourceTargetActivityId=activityId||null;
   pendingSourceFile=null;
+  pendingSourceDriveFile=null;
+  pendingSourceCreatedActivityId=null;
   const input=$("#sourceFileInput"); if(input)input.value="";
   if($("#sourceFileTitle"))$("#sourceFileTitle").textContent="Chọn công văn / kế hoạch / ảnh";
   if($("#sourceFileMeta"))$("#sourceFileMeta").textContent="PDF, DOCX, TXT, JPG, PNG, WEBP · tối đa 15 MB";
@@ -1208,6 +1212,8 @@ function closeSourceWorkflowModal(){
 }
 function sourceFileChanged(file){
   pendingSourceFile=file||null;
+  pendingSourceDriveFile=null;
+  pendingSourceCreatedActivityId=null;
   if(!file)return;
   const mb=(file.size/1024/1024).toFixed(2);
   $("#sourceFileTitle").textContent=file.name;
@@ -1300,7 +1306,16 @@ async function getDriveActivitySourceFolder(activity){
   const sourceFolder=await driveEnsureFolder("01_Nguon-cong-van",activityFolder.id);
   return {activityFolder,sourceFolder};
 }
+async function driveFindSameFile(file,parentId){
+  const parts=[`trashed=false`,`name='${driveEscapeQuery(file.name)}'`,`'${driveEscapeQuery(parentId)}' in parents`];
+  const q=encodeURIComponent(parts.join(" and "));
+  const data=await driveFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&orderBy=createdTime desc&fields=files(id,name,mimeType,size,parents,webViewLink,createdTime)&pageSize=10`);
+  return (data?.files||[]).find(x=>Number(x.size||0)===Number(file.size||0))||null;
+}
 async function driveUploadFile(file,parentId){
+  // HOTFIX-02: nếu lần trước đã upload cùng file vào Inbox thì tái sử dụng, không tạo bản trùng.
+  const existing=await driveFindSameFile(file,parentId);
+  if(existing)return existing;
   const metadata={name:file.name,parents:[parentId]};
   const boundary="-------doi-ai-"+crypto.randomUUID();
   const metaBlob=new Blob([JSON.stringify(metadata)],{type:"application/json; charset=UTF-8"});
@@ -1350,13 +1365,25 @@ async function sourceAnalysisPayload(file){
   }
   return {file_base64:await fileToBase64(file),file_name:file.name,mime_type:file.type||"application/octet-stream"};
 }
+async function invokeGeminiWithClientRetry(body,label="Gemini"){
+  const delays=[0,1800,4000];
+  let lastError=null;
+  for(let i=0;i<delays.length;i++){
+    if(delays[i])await new Promise(r=>setTimeout(r,delays[i]));
+    const {data,error}=await sb.functions.invoke(SOURCE_AI_FUNCTION_NAME,{body});
+    if(error){lastError=error; continue;}
+    if(data?.ok!==false && !data?.error)return data;
+    const status=Number(data?.status||data?.details?.error?.code||0);
+    lastError=new Error(data?.error+(data?.stage?` [${data.stage}]`:""));
+    if(![429,500,502,503,504].includes(status))throw lastError;
+  }
+  throw lastError||new Error(`${label} chưa phản hồi.`);
+}
 async function analyzeSourceFile(file){
   const payload=await sourceAnalysisPayload(file);
   payload.mode="analyze_source";
   payload.profile=profileForAI();
-  const {data,error}=await sb.functions.invoke(SOURCE_AI_FUNCTION_NAME,{body:payload});
-  if(error)throw error;
-  if(data?.error)throw new Error(data.error);
+  const data=await invokeGeminiWithClientRetry(payload,"Gemini đọc công văn");
   if(!data?.analysis)throw new Error("AI chưa trả về kết quả phân tích công văn.");
   return data.analysis;
 }
@@ -1417,8 +1444,11 @@ async function saveActivitySourceRecord(activity,driveFile,folder,analysis){
     source_kind:"directive",
     analysis_json:analysis
   };
-  const {error}=await sb.from("activity_source_files").insert(row);
-  if(error)throw error;
+  const {data:existing}=await sb.from("activity_source_files").select("id").eq("created_by",currentUser.id).eq("drive_file_id",driveFile.id).maybeSingle();
+  if(!existing){
+    const {error}=await sb.from("activity_source_files").insert(row);
+    if(error)throw error;
+  }
   return row;
 }
 async function generatePlanFromSource(activity,analysis,sourceLink){
@@ -1428,9 +1458,7 @@ async function generatePlanFromSource(activity,analysis,sourceLink){
     activity:{...activity,source_link:sourceLink||""},
     analysis
   };
-  const {data,error}=await sb.functions.invoke(SOURCE_AI_FUNCTION_NAME,{body});
-  if(error)throw error;
-  if(data?.error)throw new Error(data.error+(data?.stage?` [${data.stage}]`:""));
+  const data=await invokeGeminiWithClientRetry(body,"Gemini tạo kế hoạch");
   const text=cleanExportText(data?.text||"");
   if(!text)throw new Error("Gemini chưa tạo được Kế hoạch trường.");
   const prompt=`Gemini Free tạo Kế hoạch triển khai từ công văn nguồn: ${analysis?.source_number||""} ${analysis?.title||activity.activity_name||""}`.trim();
@@ -1463,7 +1491,8 @@ async function runSourceWorkflow(){
 
     p.textContent="2/5 · Đang lưu công văn vào Google Drive…";
     const inbox=await getDriveInboxFolder();
-    let driveFile=await driveUploadFile(file,inbox.id);
+    let driveFile=pendingSourceDriveFile||await driveUploadFile(file,inbox.id);
+    pendingSourceDriveFile=driveFile;
 
     p.textContent="3/5 · Gemini Free đang đọc và trích nội dung công văn…";
     const analysis=await analyzeSourceFile(file);
@@ -1473,11 +1502,26 @@ async function runSourceWorkflow(){
     if(pendingSourceTargetActivityId){
       activity=activityCache.find(x=>x.id===pendingSourceTargetActivityId);
       if(!activity)throw new Error("Không tìm thấy hoạt động được chọn.");
+    }else if(pendingSourceCreatedActivityId){
+      activity=activityCache.find(x=>x.id===pendingSourceCreatedActivityId);
+      if(!activity){
+        const {data}=await sb.from("team_activities").select("*").eq("id",pendingSourceCreatedActivityId).maybeSingle();
+        activity=data||null;
+      }
     }else{
-      const row=sourceActivityRow(analysis,driveFile.webViewLink);
-      const {data,error}=await sb.from("team_activities").insert(row).select().single();
-      if(error)throw error;
-      activity=data;activityCache.unshift(activity);
+      // Nếu lần chạy trước đã liên kết file nguồn rồi, dùng lại activity cũ.
+      const {data:src}=await sb.from("activity_source_files").select("activity_id").eq("created_by",currentUser.id).eq("drive_file_id",driveFile.id).maybeSingle();
+      if(src?.activity_id){
+        const {data}=await sb.from("team_activities").select("*").eq("id",src.activity_id).maybeSingle();
+        activity=data||null;
+      }
+      if(!activity){
+        const row=sourceActivityRow(analysis,driveFile.webViewLink);
+        const {data,error}=await sb.from("team_activities").insert(row).select().single();
+        if(error)throw error;
+        activity=data;activityCache.unshift(activity);
+      }
+      pendingSourceCreatedActivityId=activity.id;
     }
 
     p.textContent="4/5 · Đang liên kết nguồn với hoạt động…";
