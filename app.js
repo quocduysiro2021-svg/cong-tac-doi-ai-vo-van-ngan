@@ -1835,7 +1835,7 @@ function renderActivityWorkspace(){
 
 
 
-// V1.8A — ChatGPT Plus communication handoff. No paid API calls and no student personal data by default.
+// V1.8B — ChatGPT Plus communication workflow with Drive return. No paid API calls and no student personal data by default.
 let communicationPrompt="";
 let communicationActivityId=null;
 const communicationTypes={poster:"Poster dọc",infographic:"Infographic dọc",both:"Poster và infographic",facebook:"Bài đăng Facebook",zalo:"Thông báo Zalo phụ huynh"};
@@ -1849,6 +1849,8 @@ async function openCommunicationStudio(activityId){
   document.getElementById("commStatus").textContent="Chọn sản phẩm, sau đó bấm Tạo câu lệnh.";
   document.getElementById("commUploadStatus").textContent="";
   document.getElementById("commImageFile").value="";
+  document.getElementById("commImagePreview")?.classList.add("hidden");
+  const pi=document.getElementById("commImagePreviewImg");if(pi?.dataset?.objectUrl){URL.revokeObjectURL(pi.dataset.objectUrl);delete pi.dataset.objectUrl;}
 }
 function commList(value){return Array.isArray(value)?value.filter(Boolean).join("; "):(value||"")}
 async function buildCommunicationPrompt(){
@@ -1874,6 +1876,18 @@ async function buildCommunicationPrompt(){
 }
 async function copyCommunicationPrompt(){const t=document.getElementById("commPrompt").value.trim();if(!t)return alert("Anh hãy tạo câu lệnh trước.");try{await navigator.clipboard.writeText(t);document.getElementById("commStatus").textContent="✓ Đã sao chép. Bấm Mở ChatGPT rồi dán câu lệnh vào cuộc trò chuyện."}catch(e){document.getElementById("commPrompt").select();alert("Trình duyệt không cho phép sao chép tự động. Anh nhấn Ctrl+C tại ô câu lệnh.")}}
 function downloadCommunicationPrompt(){const t=document.getElementById("commPrompt").value.trim();if(!t)return alert("Anh hãy tạo câu lệnh trước.");const blob=new Blob(["\ufeff"+t],{type:"text/plain;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="prompt-truyen-thong-chatgpt.txt";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+
+function previewCommunicationImage(){
+  const input=document.getElementById("commImageFile"),file=input?.files?.[0];
+  const box=document.getElementById("commImagePreview"),img=document.getElementById("commImagePreviewImg"),meta=document.getElementById("commImageMeta");
+  if(!box||!img||!meta)return;
+  if(img.dataset.objectUrl){URL.revokeObjectURL(img.dataset.objectUrl);delete img.dataset.objectUrl;}
+  if(!file){box.classList.add("hidden");return;}
+  if(!["image/png","image/jpeg","image/webp"].includes(file.type)){box.classList.add("hidden");meta.textContent="Định dạng chưa hỗ trợ.";return;}
+  const url=URL.createObjectURL(file);img.src=url;img.dataset.objectUrl=url;
+  meta.textContent=`${file.name} · ${(file.size/1024/1024).toFixed(2)} MB`;box.classList.remove("hidden");
+}
+
 async function uploadCommunicationImage(){
   const file=document.getElementById("commImageFile").files[0],st=document.getElementById("commUploadStatus");
   if(!file)return alert("Anh chọn ảnh thành phẩm PNG/JPG/WebP trước.");
@@ -1889,7 +1903,7 @@ async function uploadCommunicationImage(){
     // Existing evidence table records the Drive link and keeps the activity association.
     const {error}=await sb.from("activity_evidence").insert({activity_id:a.id,created_by:currentUser.id,evidence_type:"Ảnh",title:"Truyền thông: "+file.name,external_url:url,description:"Thành phẩm tạo bằng ChatGPT; lưu Google Drive / 04_Truyen-thong",updated_at:new Date().toISOString()});
     if(error){st.textContent="✓ Ảnh đã lưu Drive, nhưng chưa ghi minh chứng: "+error.message+". Link: "+url;return}
-    st.innerHTML=`✓ Đã lưu vào Drive và liên kết Minh chứng hoạt động. <a href="${esc(url)}" target="_blank" rel="noopener">Mở ảnh</a>`;
+    st.innerHTML=`✓ Hoàn tất: đã lưu vào Drive / 04_Truyen-thong và liên kết Minh chứng hoạt động. <a href="${esc(url)}" target="_blank" rel="noopener">Mở ảnh</a>`;
     if(selectedActivityId===a.id)await loadActivityEvidence(a.id);
   }catch(e){st.textContent="Chưa lưu được: "+(e?.message||e)}finally{btn.disabled=false}
 }
