@@ -20,7 +20,7 @@
       <label>Email</label><input id="email" type="email" autocomplete="username" placeholder="email@truong.edu.vn"/>
       <label>Mật khẩu</label><input id="password" type="password" autocomplete="current-password" placeholder="••••••••"/>
       <button id="loginBtn">Đăng nhập</button><div id="loginMsg" class="msg"></div>
-      <div class="demo-note">V1.7C-02 GEMINI FREE • Hoạt động & Sự kiện • AI nghiệp vụ</div>
+      <div class="demo-note">V1.8A CHATGPT PLUS • Hoạt động & Sự kiện • AI nghiệp vụ</div>
     </div>
   </div>
 
@@ -226,5 +226,6 @@
   </div>
 </div>
 
+<div id="communicationModal" class="word-export-modal hidden"><div class="word-export-backdrop" onclick="closeCommunicationStudio()"></div><div class="quick-activity-dialog" style="max-width:850px;max-height:92vh;overflow:auto"><div class="word-export-head"><div><small>V1.8A · CHATGPT PLUS</small><h3>🎨 Studio truyền thông</h3><div id="commActivityName" class="muted"></div></div><button class="icon-btn" onclick="closeCommunicationStudio()">✕</button></div><div class="quick-activity-body"><p>App tự tổng hợp công văn đã phân tích, kế hoạch và hồ sơ trường. Anh chuyển câu lệnh sang ChatGPT Plus để tạo sản phẩm, sau đó tải ảnh về đây để lưu Drive.</p><div class="quick-grid"><label class="quick-field"><span>Loại sản phẩm</span><select id="commType"><option value="poster">Poster dọc</option><option value="infographic">Infographic dọc</option><option value="both">Cả Poster và Infographic</option><option value="facebook">Bài đăng Facebook</option><option value="zalo">Thông báo Zalo phụ huynh</option></select></label><label class="quick-field"><span>Yêu cầu bổ sung (không bắt buộc)</span><input id="commNotes" placeholder="Ví dụ: tông xanh, phù hợp học sinh lớp 1–5"></label></div><button class="btn primary" onclick="buildCommunicationPrompt()">✨ TẠO CÂU LỆNH TỰ ĐỘNG</button><div id="commStatus" class="muted" role="status"></div><label class="quick-field"><span>Câu lệnh để đưa sang ChatGPT (anh có thể chỉnh sửa)</span><textarea id="commPrompt" rows="12" style="width:100%;min-height:210px" placeholder="Câu lệnh sẽ xuất hiện tại đây..."></textarea></label><div class="quick-actions" style="flex-wrap:wrap"><button class="btn primary" onclick="copyCommunicationPrompt()">📋 Sao chép câu lệnh</button><button class="btn secondary" onclick="window.open('https://chatgpt.com/','_blank','noopener')">↗ Mở ChatGPT</button><button class="btn secondary" onclick="downloadCommunicationPrompt()">⬇ Tải câu lệnh .txt</button></div><hr/><h4>📁 Lưu thành phẩm vào hoạt động</h4><p class="muted">Sau khi ChatGPT tạo ảnh, anh tải PNG/JPG về máy, rồi chọn ảnh ở đây. App lưu ảnh vào Google Drive và liên kết Minh chứng.</p><input id="commImageFile" type="file" accept="image/png,image/jpeg,image/webp"/><button id="commUploadBtn" class="btn primary" onclick="uploadCommunicationImage()">☁ Lưu ảnh vào Drive</button><div id="commUploadStatus" class="muted" role="status"></div><button class="btn secondary" onclick="closeCommunicationStudio()">Đóng</button></div></div></div>
 </body>
 </html>
