@@ -47,6 +47,13 @@ input,select,textarea{border-radius:10px!important;border:1px solid #d5dce7!impo
 .auth-wrap{background:radial-gradient(circle at 20% 10%,#edf5ff 0,transparent 36%),linear-gradient(145deg,#f8fbff,#eef3f9)}.auth-card{border:1px solid rgba(214,223,235,.9);border-radius:22px!important;box-shadow:0 24px 70px rgba(28,54,89,.14)!important}.auth-card h1{letter-spacing:-.025em}.login-logos{margin-bottom:14px}
 .smart-calendar-card{box-shadow:var(--ui-shadow-soft)}.calendar-month-grid,.calendar-week-grid{scrollbar-width:thin}.calendar-cell{transition:background .15s ease}.calendar-cell:hover{background:#fbfdff}.calendar-event{min-height:27px;transition:filter .15s ease,transform .15s ease}.calendar-event:hover{filter:brightness(.98);transform:translateX(1px)}
 @media(max-width:1100px){#content{padding:18px}.dashboard-columns,.ai-layout{grid-template-columns:1fr!important}.word-export-grid{grid-template-columns:1fr!important}.word-export-preview-wrap{min-height:420px}}
+
+/* V2.0C-UI02 · Modal spacing refinement */
+.plan-dialog{padding:0 22px 18px!important;box-sizing:border-box!important}
+.plan-dialog>.word-export-head{margin-left:-22px!important;margin-right:-22px!important;padding-left:22px!important;padding-right:22px!important}
+.plan-dialog>.quick-grid,.plan-dialog>.plan-modal-types,.plan-dialog>.detail-block,.plan-dialog>.muted,.plan-dialog>.result,.plan-dialog>.quick-actions{box-sizing:border-box}
+.plan-dialog>.quick-actions{margin-top:16px}
+@media(max-width:760px){.plan-dialog{padding:0 14px 14px!important}.plan-dialog>.word-export-head{margin-left:-14px!important;margin-right:-14px!important;padding-left:14px!important;padding-right:14px!important}}
 @media(max-width:760px){#content{padding:14px 12px 28px}main>header{min-height:64px}.hero{padding:20px!important}.hero-actions,.ai-actions,.action-row{display:flex;flex-wrap:wrap;gap:8px}.hero-actions .btn,.ai-actions .btn{flex:1 1 160px}.dashboard-stats{grid-template-columns:repeat(2,1fr)!important}.grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}.quick{min-height:112px;padding:12px!important}.quick small{font-size:11px}.word-export-modal:not(.hidden){padding:8px}.word-export-dialog,.source-workflow-dialog,.quick-activity-dialog,.independent-doc-dialog,.plan-dialog,.personal-task-dialog,.calendar-detail-dialog{width:calc(100vw - 16px)!important;max-height:calc(100vh - 16px)!important;border-radius:14px!important}.word-export-head{padding-top:10px}.plan-center-hero,.personal-work-head,.smart-calendar-head{padding:16px!important}.plan-type-grid{gap:8px}.plan-type-grid button{min-height:76px}.user-chip{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
 @media(max-width:430px){.grid{grid-template-columns:1fr!important}.dashboard-stats{grid-template-columns:1fr 1fr!important}.hero-actions .btn,.ai-actions .btn{flex-basis:100%}.plan-stats,.personal-task-stats,.calendar-stats{gap:7px!important}.plan-stats>div,.personal-task-stats>div,.calendar-stats>div{padding:10px!important}.plan-stats b,.personal-task-stats b,.calendar-stats b{font-size:21px!important}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
@@ -111,7 +118,7 @@ input,select,textarea{border-radius:10px!important;border:1px solid #d5dce7!impo
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="config.js"></script>
-  <script src="app.js?v=2.0C-UI01-20261003"></script>
+  <script src="app.js?v=2.0C-UI02-20261003"></script>
 
 
 
