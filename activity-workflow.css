@@ -1,0 +1,16 @@
+.workflow-v21{border:1px solid #dfe7f1;border-radius:16px;padding:16px;margin:18px 0;background:#fff}
+.workflow-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.workflow-head h4{margin:5px 0 14px}.workflow-head small{color:#64748b}
+.workflow-tabs{display:flex;gap:6px;padding:5px;background:#f1f5f9;border-radius:12px;margin:8px 0 15px;overflow-x:auto}
+.workflow-tabs button{border:0;border-radius:9px;background:transparent;padding:11px 12px;cursor:pointer;font-weight:700;white-space:nowrap;flex:1;color:#475569}
+.workflow-tabs button.active{background:#fff;color:#0b63ce;box-shadow:0 2px 8px #0b63ce15}
+.workflow-summary,.workflow-job{padding:14px;border:1px solid #e2e8f0;border-radius:12px;margin:12px 0}.workflow-summary p{line-height:1.5;color:#64748b}
+.workflow-facts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}.workflow-facts span{overflow-wrap:anywhere;font-size:14px}
+.workflow-warning{background:#fff8e8;color:#8a5300;border:1px solid #f2d795;border-radius:10px;padding:12px;margin:12px 0;line-height:1.6}.workflow-warning-text{color:#a15c00!important}
+.workflow-job b,.workflow-job small{display:block;margin-bottom:8px}.workflow-job p{overflow-wrap:anywhere}.workflow-job small{color:#64748b}
+.workflow-doc,.workflow-version{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #e9edf3;padding:14px 0}.workflow-doc small{display:block;margin-top:6px;color:#64748b}.workflow-doc .action-row{flex-wrap:wrap;justify-content:flex-end}
+.workflow-text{white-space:pre-wrap;overflow-wrap:anywhere;max-height:55vh;overflow:auto;font-family:inherit;line-height:1.6}
+.workflow-review{max-width:1000px!important;width:calc(100vw - 40px);max-height:92vh;overflow:auto}.workflow-review-body{padding:12px;border:1px solid #e2e8f0;border-radius:10px;max-height:62vh;overflow:auto;line-height:1.6}
+.workflow-edit{width:100%;box-sizing:border-box;line-height:1.6;margin:10px 0}
+.workflow-review .quick-actions{position:sticky;bottom:0;background:white;padding-top:12px;border-top:1px solid #e2e8f0}
+.workflow-v21 button:focus-visible,.workflow-review button:focus-visible{outline:3px solid #60a5fa;outline-offset:3px}
+@media(max-width:700px){.workflow-v21{padding:12px}.workflow-doc,.workflow-version{align-items:flex-start;flex-direction:column}.workflow-doc .action-row{justify-content:flex-start}.workflow-facts{grid-template-columns:1fr}.workflow-review{width:calc(100vw - 16px);max-height:calc(100vh - 16px)}.workflow-tabs button{flex:none}.workflow-summary>.btn{margin:4px 0;width:100%}}
